@@ -1,0 +1,26 @@
+.heading {
+    text-transform: uppercase;
+    font-family: $font-family-headings;
+    font-weight: 900;
+    letter-spacing: .03em;
+    text-align: left;
+    margin: 0;
+    position: relative;
+
+    &_main {
+        font-size: $size-font-heading-main;
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: -0.5em;
+            display: block;
+            height: 0.18em;
+            width: 3ch;
+            background-color: currentColor;
+        }
+    }
+    
+    &_sub {
+        font-size: $size-font-heading-sub;
+    }
+}

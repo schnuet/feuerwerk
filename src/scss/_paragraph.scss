@@ -1,0 +1,21 @@
+.paragraph {
+	text-align: left;
+	font-family: $font-family-body;
+	font-size: $size-font-paragraph;
+	line-height: 1.4em;
+	letter-spacing: .015em;
+
+	div {
+		display: contents;
+	}
+	p:first-child {
+		margin-top: 0;
+	}
+
+	ul {
+		list-style-type: disc;
+		li {
+			display: block;
+		}
+	}
+}
