@@ -16,11 +16,16 @@ Vue.component('swiper-slide', swiperSlide);
 import Page from './components/Page.vue';
 import PageContainer from './components/PageContainer.vue';
 import Editor from './components/Editor.vue';
+import PageEditor from './components/PageEditor.vue';
+
 import PageElement from './components/PageElement.vue';
 
 Vue.component('page', Page);
 Vue.component('page-container', PageContainer);
+
 Vue.component('editor', Editor);
+Vue.component('page-editor', PageEditor);
+
 Vue.component('page-element', PageElement);
 
 new Vue({

@@ -1,8 +1,9 @@
 <template>
 	<div 
 		class="editor" 
-		:class="{'open': isOpen, 'on-left': isOnLeftSide}"
+		:class="{'editor_hidden': !isOpen, 'on-left': isOnLeftSide}"
 	>
+
 		<div v-if="currentElement">
 
 			<label class="inputgroup">
@@ -26,6 +27,9 @@
 				<span class="inputlabel">Inhalt</span>
 				<input class="inputgroup__input" type="text" v-model="currentElement.content">
 			</label>
+
+
+			<!-- IMAGE -->
 
 			<label v-if="currentElement.type==='image'" class="inputgroup">
 				<span class="inputlabel">Bild</span>
@@ -59,10 +63,30 @@
 				<!--<input type="text" v-model="currentElement.url">-->
 			</label>
 
+			<div v-if="currentElement.type==='image'" class="inputgroup">
+				<span class="inputlabel">Platzmodus</span>
+				<div class="choicebox">
+					<label class="choicebox__choice" :class="{'active': currentElement.fit === 'contain'}">
+						<span class="choicebox__label" >Einbetten</span>
+						<input type="radio" v-model="currentElement.fit" value="contain">
+					</label>
+					<label class="choicebox__choice" :class="{'active': currentElement.fit === 'cover'}">
+						<span class="choicebox__label">Ausfüllen</span>
+						<input type="radio" v-model="currentElement.fit" value="cover">
+					</label>
+				</div>
+			</div>
+
+
+			<!-- PARAGRAPH -->
+
 			<label v-if="currentElement.type==='paragraph'" class="inputgroup">
 				<span class="inputlabel">Inhalt</span>
 				<textarea class="inputgroup__input inputgroup__area" v-model="currentElement.content"></textarea>
 			</label>
+
+
+			<!-- POSITIONING -->
 
 			<label class="inputgroup">
 				<span class="inputlabel">Im Raster</span>
@@ -81,44 +105,49 @@
 					<input class="inputgroup__input half" type="number" min="1" v-model.number="currentElement.gridHeight">
 				</label>
 			</template>
-			
 
-			<button 
-				class="button button_done-editing" 
-				@click="stopEditing"
-			></button>
-			<button 
-				class="button button_change-side" 
-				@click="isOnLeftSide = !isOnLeftSide"
-			></button>
+
+
+			<!-- MENU BUTTONS -->
+
 			<button
-				class="button button_delete"
+				class="button button_icon editor__button_toggle"
+			>
+				<i class="fa fa-bars" aria-hidden="true"></i>
+			</button>
+			<button 
+				class="button button_icon editor__button_done" 
+				@click="stopEditing"
+			>
+				<i class="fa fa-check" aria-hidden="true"></i>
+			</button>
+			<button 
+				class="button editor__button_move" 
+				@click="isOnLeftSide = !isOnLeftSide"
+			>
+				<i class="fa fa-arrows" aria-hidden="true"></i>
+			</button>
+			<button
+				class="button button_icon editor__button_delete"
 				@click="deleteElement()"
-			></button>
-		</div>
-		<div class="editor__bottombar" v-else>
-			<button class="button button_wide" @click="createElement">Neues Element</button>
-			<button class="button button_wide" @click="createPage">Neue Seite</button>
-			<button class="button button_wide" @click="load">Laden</button>
+			>
+				<i class="fa fa-trash" aria-hidden="true"></i>
+			</button>
 		</div>
   	</div>
 </template>
 
 <script>
 const _ = require('lodash');
+import elementTypes from '../data/elementTypes';
 
 let editorElement = null;
+
 export default {
 	data() {
 		return {
 			images: [],
-			elementTypes: {
-				image: 			{label: 'Bild', class: 'image'},
-				heading_main: 	{label: 'Überschrift', class: 'heading heading_main'},
-				heading_sub: 	{label: 'Unterüberschrift', class: 'heading heading_sub'},
-				paragraph: 		{label: 'Absatz', class: 'paragraph'},
-				
-			},
+			elementTypes: elementTypes,
 			choosingImage: false,
 			imageChoseSliderOptions: {
 				autoplay: false,
@@ -132,7 +161,7 @@ export default {
 		};
 	},
 
-	props: ['currentElement', 'elements'],
+	props: ['currentElement'],
 
 	created () {
 		this.images = this.getImages();
@@ -140,31 +169,6 @@ export default {
 	},
 
 	methods: {
-		createElement() {
-			let element = {
-				type: 'paragraph',
-				class: '',
-				content: '',
-				url: '',
-				inGrid: true,
-				gridColumnStart: 1,
-				gridWidth: 2,
-				gridRowStart: 1,
-				gridHeight: 1,
-				left: 0,
-				top: 0,
-				width: 30,
-				height: 20
-			}
-			this.$emit ('created-element', element);
-		},
-		createPage () {
-			let page = {
-				elements: [],
-				class: 'page_layout-text'
-			};
-			this.$emit ('created-page', page);
-		},
 		deleteElement() {
 			if (confirm('Möchtest du das Element wirklich löschen?')) {
 				this.$emit('delete-element');
@@ -178,13 +182,10 @@ export default {
 			console.log ('loading imgs');
 			let images = [];
 			context.keys().forEach(function (key) {
-				images.push(context(key));
+				images.push('.' + context(key));
 			});
 			console.log (images);
 			return images;
-		},
-		load () {
-			this.$emit('load');
 		}
 	},
 
@@ -207,51 +208,35 @@ export default {
 @import "../scss/variables";
 
 .editor {
-	position: fixed;
-	z-index: 10;
-	text-align: left;
-	bottom: 0;
 
-	&.on-left {
-		left: 0;
-	}
-	&:not(.on-left) {
-		right: 0;
-	}
-	
+	&__button {
 
-	&.open {
-		bottom: auto;
-		top: 0;
-		padding: 1rem 0;
-		padding-top: $size-button-height;
-		min-height: 50vh;
-		max-height: 100vh;
-		overflow: auto;
-		width: 300px;
-		background-color: #333;
-	}
-
-	.button {
-		min-height: $size-button-height;
-		min-width: $size-button-height;
-		background-color: #222;
-		color: #fff;
-		border: none;
-
-		&_wide {
-			padding: 0 1rem;
-		}
-		&_done-editing {
+		&_done, &_move, &_delete, &_toggle {
 			position: absolute;
 			top: 0;
+		}
+
+		&_move, &_toggle {
+			&:hover {
+				color: #ccc;
+			}
+		}
+
+		&_toggle {
+			left: 0;
+		}
+
+		&_done {
 			right: 0;
 			height: 44px;
 			width: 44px;
-			color: #fff;
 			border: none;
+			
+			&:hover {
+				color: #5C5;
+			}
 
-			&::after, &::before {
+			/*&::after, &::before {
 				content: '';
 				position: absolute;
 				display: block;
@@ -274,19 +259,19 @@ export default {
 			}
 			&:hover::before, &:hover::after {
 				background-color: #5C5;
-			}
+			}*/
 		}
-		&_change-side {
-			position: absolute;
-			top: 0;
-			left: 0;
+		&_move {
+			left: $size-button-height;
 		}
 		&_delete {
-			position: absolute;
-			top: 0;
 			right: $size-button-height;
 
-			&::after, &::before {
+			&:hover {
+				color: #C55;
+			}
+
+			/*&::after, &::before {
 				content: '';
 				position: absolute;
 				display: block;
@@ -304,62 +289,8 @@ export default {
 			}
 			&:hover::before, &:hover::after {
 				background-color: #C55;
-			}
+			}*/
 		}
-
-		&:hover {
-			background-color: #444;
-		}
-	}
-
-	.inputgroup {
-		padding: 0.5em 1rem;
-		display: block;
-		overflow: hidden;
-
-		&__input {
-			background-color: #333;
-			color: #eee;
-			border: 1px solid $color-editor-neutral;
-			border-radius: 2px;
-			padding: 7px;
-			box-sizing: border-box;
-			display: block;
-			width: 100%;
-
-			&:focus {
-				border-color: $color-editor-highlight;
-			}
-
-			&.half {
-				float: left;
-				width: 50%;
-				& + & {
-					border-left: none;
-				}
-			}
-		}
-		&__area {
-			resize: vertical;
-		}
-
-		.inputlabel {
-			display: block;
-			margin: 0.25em 0;
-			color: $color-editor-neutral;
-			transition: color 0.12s;
-		}
-
-		&:hover {
-			background-color: #444;
-		}
-		&:hover .inputlabel {
-			color: $color-editor-highlight;
-		}
-		&:hover .inputgroup__input {
-			border-color: $color-editor-highlight;
-		}
-
 	}
 
 	.swiper_image-chooser {
@@ -379,15 +310,6 @@ export default {
 		height: 3rem;
 		width: 100%;
 		cursor: pointer;
-	}
-
-	&__bottombar {
-		position: fixed;
-		bottom: 0;
-		right: 0;
-		padding-right: 2rem;
-		display: flex;
-		flex-direction: row-reverse;
 	}
 }
 </style>

@@ -1,0 +1,29 @@
+.editor {
+	position: fixed;
+	z-index: 10;
+	top: 0;
+
+	padding: 1rem 0;
+	padding-top: $size-button-height;
+	min-height: 50vh;
+	max-height: 100vh;
+	width: $size-editor-width;
+
+	text-align: left;
+	overflow: auto;
+	
+	background-color: $color-ui-background;
+
+	&.on-left {
+		left: 0;
+	}
+	&:not(.on-left) {
+		right: 0;
+	}
+	
+
+	&_hidden {
+		opacity: 0;
+		pointer-events: none;
+	}
+}

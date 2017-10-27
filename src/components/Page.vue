@@ -1,26 +1,59 @@
 <template>
-  <div class="page">
-      <slot>
-         <p>I am the default content.</p>
-      </slot>
-  </div>
+	<swiper-slide 
+		class="page"
+		:class="classList"
+	>
+		<page-element 
+			v-for="element in page.elements" 
+			:element="element" 
+			:type="element.type" 
+			:key="element.id"
+			:current-element="currentElement"
+			@selected="selectElement">
+		</page-element>
+  </swiper-slide>
 </template>
 
 <script>
-export default {
-  data() {
-      return {
+import pageColors from '../data/pageColors';
+import pageLayouts from '../data/pageLayouts';
 
-      };
-  }
+export default {
+	data() {
+		return {
+			
+	  	};
+	},
+
+	props: ['page', 'currentElement'],
+	  
+	methods: {
+		selectElement(element) {
+			this.$emit('select-element', element);
+		},
+	},
+
+	computed: {
+		classList() {
+			let classes = [];
+			if (this.color) {
+				classes.push(this.color.class);
+			}
+			if (this.layout) {
+				classes.push(this.layout.class);
+			}
+			return classes;
+		},
+		color() {
+			return pageColors[this.page.color];
+		},
+		layout() {
+			return pageLayouts[this.page.layout];
+		}
+	}
 }
 </script>
 
 <style lang="scss">
-.page {
-    display: block;
-    background-color: red;
-    height: 100vh;
-    width: 100%;
-}
+
 </style>

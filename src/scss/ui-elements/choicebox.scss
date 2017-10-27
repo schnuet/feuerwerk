@@ -1,0 +1,27 @@
+.choicebox {
+
+	display: flex;
+	flex-direction: row;
+	background-color: $color-ui-background;
+
+	&__choice {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		height: $size-button-height;
+
+		&:not(.active) {
+			filter: opacity(25%);
+		}
+
+		input {
+			position: absolute;
+			opacity: 0;
+		}
+	}
+
+	&__label {
+		color: #ccc;
+	}
+}

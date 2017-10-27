@@ -4,7 +4,6 @@ export const elements = [
 		page: 1,
 		type: 'heading_main',
 		class: 'heading heading_main',
-		position: 'standard',
 		content: 'Corporate Design',
 		url: '',
 		inGrid: true,
@@ -15,14 +14,14 @@ export const elements = [
 		left: 0,
 		top: 0,
 		width: 30,
-		height: 30
+		height: 30,
+		fit: 'contain'
 	},
 	{
 		id: 1,
 		page: 1,
 		type: 'heading_sub',
 		class: 'heading heading_sub',
-		position: 'standard',
 		content: 'Blickfang für Ihre Marke',
 		url: '',
 		inGrid: true,
@@ -33,14 +32,14 @@ export const elements = [
 		left: 0,
 		top: 0,
 		width: 30,
-		height: 30
+		height: 30,
+		fit: 'contain'
 	},
 	{
 		id: 2,
 		page: 1,
 		type: 'paragraph',
 		class: 'paragraph',
-		position: 'standard',
 		content: `Corporate Design (kurz CD) ist weitaus mehr als nur ein Logo. Es be­inhaltet das gesamte Er­schei­nungs­bild eines Unter­nehmens. Dies reicht von der Visiten­karte, bis hin zur Wand­farbe in den Büros.
 
 Ein gut kon­zipiertes und kon­sequent ange­wendetes Corporate Design för­dert die Image­bildung und stei­gert den Wieder­er­kennungs­wert.
@@ -57,16 +56,16 @@ Zudem können Kunden ein besseres Vertrauen zum Unter­nehmen und dessen Produkt
 		left: 0,
 		top: 0,
 		width: 30,
-		height: 30
+		height: 30,
+		fit: 'contain'
 	},
 	{
 		id: 3,
 		page: 1,
 		type: 'image',
 		class: 'image',
-		position: 'standard',
 		content: 'Das ist ein Bild!',
-		url: '',
+		url: '/dist/logo.png',
 		inGrid: true,
 		gridColumnStart: 2,
 		gridWidth: 2,
@@ -75,6 +74,7 @@ Zudem können Kunden ein besseres Vertrauen zum Unter­nehmen und dessen Produkt
 		left: 0,
 		top: 0,
 		width: 30,
-		height: 30
+		height: 30,
+		fit: 'contain'
 	},
 ];

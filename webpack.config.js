@@ -20,6 +20,10 @@ module.exports = {
             // other preprocessors should work out of the box, no loader config like this necessary.
             'scss': 'vue-style-loader!css-loader!sass-loader',
             'sass': 'vue-style-loader!css-loader!sass-loader?indentedSyntax'
+          },
+          cssModules: {
+            localIndentName: '[path][name]---[local]---[hash:base64:5]',
+            camelCase: true
           }
           // other vue-loader options go here
         }
@@ -39,6 +43,13 @@ module.exports = {
       {
         test: /\.css$/, 
         loader: 'style-loader!css-loader'
+      }, 
+      {
+        test: /\.(eot|svg|ttf|woff|woff2)$/,
+        loader: 'file-loader',
+        options: {
+          name: '[name].[ext]'
+        }
       }
     ]
   },

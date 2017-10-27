@@ -10,7 +10,6 @@
 		:style="styleList"
 		@click="makeActive"
 		@mousedown="onDragStart"
-		@mousemove="onDrag"
 	>
 		<template v-if="isTextElement">
 			<div
@@ -32,6 +31,7 @@
 			draggable="false"
 			:src="getImgUrl(element.url)" 
 			:alt="element.content"
+			:style="{'object-fit': element.fit}"
 		>
 	</div>
 </template>
@@ -53,7 +53,11 @@ export default {
 				deltaX: 0,
 				deltaY: 0
 			},
-			dragEndEventFunction: null,
+
+			// bound event functions
+			boundOnDragEnd: null,
+			boundOnDrag: null,
+
 			parent: null,
 			split: false
 		};
@@ -65,6 +69,9 @@ export default {
 				this.onSlideEntered();
 			}
 		});
+
+		this.boundOnDragEnd = this.onDragEnd.bind(this);
+		this.boundOnDrag = this.onDrag.bind(this);
 	},
 
 	methods: {
@@ -108,7 +115,9 @@ export default {
 			else {
 				event.preventDefault();
 				// there is no dragging in the grid
-				if (this.element.inGrid) this.takeOffGrid();
+				if (this.element.inGrid) {
+					//this.takeOffGrid();
+				}
 				
 				//console.log(event);
 				this.dragging = true;
@@ -116,8 +125,8 @@ export default {
 				this.dragPos.startY = event.pageY;
 			}
 
-			this.dragEndEventFunction = this.onDragEnd.bind(this)
-			window.addEventListener('mouseup', this.dragEndEventFunction, false);
+			window.addEventListener('mousemove', this.boundOnDrag, false);
+			window.addEventListener('mouseup', this.boundOnDragEnd, false);
 		
 		},
 		onDrag(event) {
@@ -128,7 +137,8 @@ export default {
 			}
 		},
 		onDragEnd (event) {
-			window.removeEventListener('mouseup', this.dragEndEventFunction);
+			window.removeEventListener('mousemove', this.boundOnDrag);
+			window.removeEventListener('mouseup', this.boundOnDragEnd);
 			
 
 			// if we are not dragging, we are resizing.
@@ -288,7 +298,6 @@ export default {
 			pointer-events: none;
 			width: 100%;
 			height: 100%;
-			object-fit: contain;
 			object-position: top left;
 		}
 	}

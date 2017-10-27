@@ -1,0 +1,26 @@
+.button {
+	min-height: $size-button-height;
+	min-width: $size-button-height;
+	background-color: #222;
+	color: #fff;
+	border: none;
+	display: block;
+	font-size: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	&_icon {
+		font-size: 1.4em;
+		transition: color 0.12s;
+		color: #666;
+	}
+
+	&_wide {
+		padding: 0 1rem;
+	}
+
+	&:hover {
+		background-color: #444;
+	}
+}

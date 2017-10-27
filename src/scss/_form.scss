@@ -1,0 +1,10 @@
+.form {
+	&_hidden {
+		display: block;
+
+		input {
+			position: absolute;
+			opacity: 0;
+		}
+	}
+}

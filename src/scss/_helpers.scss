@@ -1,0 +1,14 @@
+.is-filled {
+	&_red {
+		background-color: $red-5 !important;
+	}
+	&_yellow {
+		background-color: $yellow-5 !important;
+	}
+	&_blue {
+		background-color: $blue-5 !important;
+	}
+	&_grey {
+		background-color: $color-dark-1 !important;
+	}
+}

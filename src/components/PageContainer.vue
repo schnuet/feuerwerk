@@ -1,11 +1,24 @@
 <template>
 	<div class="pagecontainer">
+		<!--<div style="position: fixed; z-index: 4000; top: 0; left: 0;">
+			
+		</div>-->
 		<swiper
-			class="pagecontainer"
+			class="page-swiper"
 			:options="options" 
 			:not-next-tick="notNextTick" 
 			ref="mySwiper">
-			<swiper-slide
+
+			<page 
+				v-for="page in pages"
+				:key="page.id"
+				:class="{'swiper-no-swiping': swiperLocked}"
+				:page="page"
+				:current-element="currentElement"
+				@select-element="selectElement"
+			></page>
+
+			<!--<swiper-slide
 				v-for="page in pages"
 				:key="page.id"
 				class="page"
@@ -19,32 +32,82 @@
 					:current-element="currentElement"
 					@selected="selectElement">
 				</page-element>
-			</swiper-slide>
+			</swiper-slide>-->
+
 			<!-- Optional controls -->
 			<div class="swiper-pagination"  slot="pagination"></div>
-			<div class="swiper-button-prev" slot="button-prev"></div>
-			<div class="swiper-button-next" slot="button-next"></div>
+			<!--
+				<div class="swiper-button-prev" slot="button-prev"></div>
+				<div class="swiper-button-next" slot="button-next"></div>
+			-->
 			<div class="swiper-scrollbar"   slot="scrollbar"></div>
 		</swiper>
 
 		<editor 
-			v-show="editorVisible" 
 			:current-element="currentElement"
-			:elements="elements"
-			@created-element="addElement"
-			@created-page="addPage"
 			@stop-editing="deselectElement"
 			@delete-element="deleteElement"
-			@load="loadData"
 			>
 		</editor>
+		<page-editor
+			v-if="showPageEditor"
+			:page="currentPage"
+		>
+		</page-editor>
+		<div class="bottombar" v-show="!editorVisible">
+			<div class="bottombar_buttonblock">
+				<button class="button button_wide" @click="loadData">Laden</button>
+				<button class="button button_wide" @click="saveData">Speichern</button>
+				<button class="button button_wide" @click="saveFile">Export</button>
+				<div class="form_hidden">
+					<label for="import_file_field" class="button button_wide">Import</label>
+					<input id="import_file_field" type="file" @change="importFile">
+				</div>
+				<button 
+					class="button button_icon" 
+					@click="showOverview = true"
+				>
+					<i class="fa fa-th-large" aria-hidden="true"></i>
+				</button>
+				<button 
+					class="button button_icon" 
+					@click="showPageEditor = !showPageEditor"
+				>
+					<i class="fa fa-cog" aria-hidden="true"></i>
+				</button>
+			</div>
+			<div class="bottombar_buttonblock">
+				<button class="button button_wide" @click="createElement">Neues Element</button>
+				<button class="button button_wide" @click="createPage">Neue Seite</button>		
+			</div>
+		</div>
+		<div
+			v-if="showOverview" 
+			class="pageoverview"
+		>
+			<div 
+				v-for="page in pages" 
+				:key="page.id"
+				class="pageoverview__page"
+				:class="['is-filled_' + page.color]"
+				@click="gotoPage(page.id); showOverview = false;"
+			>
+
+			</div>
+			<button 
+				class="button button_icon pageoverview__button_close" 
+				@click="showOverview = false"
+			>
+				<i class="fa fa-times" aria-hidden="true"></i>
+			</button>
+		</div>
 	</div>
 </template>
 
 <script>
 import {bus} from '../services/eventBus';
 
-import {elements} from '../data/elements';
+import {pages} from '../data/pages';
 
 import _ from 'lodash';
 
@@ -63,8 +126,8 @@ export default {
 				autoHeight: false,
 				pagination: '.swiper-pagination',
 				paginationClickable: true,
-				prevButton: '.swiper-button-prev',
-				nextButton: '.swiper-button-next',
+				//prevButton: '.swiper-button-prev',
+				//nextButton: '.swiper-button-next',
 				scrollbar: '.swiper-scrollbar',
 				mousewheelControl: true,
 				observeParents: true,
@@ -74,53 +137,42 @@ export default {
 				onTransitionStart (swiper) {
 					console.log(swiper)
 				},
-				onSetTransition(swiper, transition) {
-					console.log ('transition', transition);
-				},
-				onSetTranslate(swiper, translate) {
-					console.log ('translate', translate);
-				},
-				onSlideChangeTransitionEnd(swiper, event) {
-					console.log ('transition ended', event);
-				},
-				/*onSlideChangeEnd(swiper) {
-					//console.log('change', swiper.realIndex);
-				}*/
+				//onSetTranslate(swiper, translate) {
+				//	console.log ('translate', translate);
+				//},
+				//onSlideChangeTransitionEnd(swiper, event) {
+				//	console.log ('transition ended', event);
+				//},
+				onSlideChangeEnd(swiper) {
+					pageC.currentSlide = swiper.realIndex;
+				}
 				// more Swiper configs and callbacks...
 				// ...
 			},
 			swiperLocked: false,
+			currentSlide: 0,
 
-			pages: [
-				{
-					id: 0,
-					elements: [],
-					class: 'page_red page_layout-text'
-				},
-				{
-					id: 1,
-					elements: elements,
-					class: 'page_yellow page_layout-text'
-				},
-				{
-					id: 2,
-					elements: [],
-					class: 'page_blue page_layout-text'
-				}
-			],
-			elements: elements,
+			showOverview: false,
+			showPageEditor: false,
 
-			editorVisible: true,
+			pages: pages,
+
 			currentElement: null
 		}
 	},
 
-	// you can find current swiper instance object like this, 
-  	// while the notNextTick property value must be true
-	computed: {
-		swiper() {
-			return this.$refs.mySwiper.swiper;
-    	}
+	created () {
+		pageC = this;
+	},
+
+	mounted () {
+		// you can use current swiper instance object to do something(swiper methods)
+    	//console.log('this is current swiper instance object', this.swiper);
+    	//this.swiper.slideTo(3, 1000, false);
+		console.log ('swiper', this.swiper);
+		this.swiper.on('onTransitionEnd', function (swiper) {
+			bus.$emit('slideEntered', swiper.activeIndex);
+		});
 	},
 
 	methods: {
@@ -141,8 +193,24 @@ export default {
 			this.options.allowSwipeToNext = true;
 			this.options.allowSwipeToPrev = true;
 		},
-		addElement(element) {
-			let elements = this.pages[this.swiper.realIndex].elements;
+
+		createElement() {
+			let element = {
+				type: 'paragraph',
+				class: '',
+				content: '',
+				url: '',
+				inGrid: true,
+				gridColumnStart: 1,
+				gridWidth: 2,
+				gridRowStart: 1,
+				gridHeight: 1,
+				left: 0,
+				top: 0,
+				width: 30,
+				height: 20
+			}
+			let elements = this.currentPage.elements;
 			element.id = elements.length;
 			elements.push(element);
 			this.selectElement(element);
@@ -161,12 +229,18 @@ export default {
 		deleteElement() {
 			let element = this.currentElement;
 			this.deselectElement();
-			let index = _.findIndex(this.elements, ['id', element.id]);
-			this.elements.splice(index, 1);
+			let elements = this.currentPage.elements;
+			let index = _.findIndex(elements, ['id', element.id]);
+			elements.splice(index, 1);
 			this.saveData();
 		},
-		addPage(page) {
-			page.id = this.pages.length;
+		createPage () {
+			let page = {
+				id: this.pages.length,
+				elements: [],
+				layout: 'text',
+				color: 'grey'
+			};
 			this.pages.push(page);
 			setTimeout(function(context) {
 				context.swiper.slideTo(context.pages.length);
@@ -174,28 +248,69 @@ export default {
 			//this.swiper.slideTo(this.pages.length);
 			this.saveData();
 		},
+
+
 		saveData () {
+			console.log ('daten speichern.');
 			let pageData = JSON.stringify(this.pages);
 			localStorage.setItem('pageData', pageData);
+			return pageData;
 		},
-		loadData () {
-			let pageData = localStorage.getItem('pageData');
+		saveFile () {
+			let data = this.saveData();
+			var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(data);
+			var dlAnchorElem = document.createElement('a');
+			dlAnchorElem.setAttribute("href", dataStr);
+			dlAnchorElem.setAttribute("download", "leuchtkoerper.feuerwerk");
+			document.body.appendChild(dlAnchorElem);
+			console.log (dlAnchorElem);
+			dlAnchorElem.click();
+			setTimeout(function () {
+				dlAnchorElem.remove();
+			});
+		},
+		loadState () {
+			let pageData = localStorage.getItem('pageData');			
+			this.loadData(pageData);
+		},
+		loadData (pageData) {
 			let parsed = JSON.parse(pageData);
 			this.pages = parsed;
+			return parsed;
+		},
+		importFile (event) {
+			var file = event.target.files[0];
+			if (!file) {
+				return;
+			}
+			var reader = new FileReader();
+			reader.onload = (function(event) {
+				var contents = event.target.result;
+				//console.log(contents);
+				this.loadData(contents);
+			}).bind(this);
+			reader.readAsText(file);
+		},
+
+		gotoPage(pageId) {
+			let index = _.findIndex(this.pages, ['id', pageId]);
+			this.swiper.slideTo(index);
 		}
 	},
 
-	created () {
-		pageC = this;
-	},
-
-	mounted () {
-		// you can use current swiper instance object to do something(swiper methods)
-    	//console.log('this is current swiper instance object', this.swiper);
-    	//this.swiper.slideTo(3, 1000, false);
-		this.swiper.on('onTransitionEnd', function (swiper) {
-			bus.$emit('slideEntered', swiper.activeIndex);
-		});
+	computed: {
+		editorVisible () {
+			return (this.currentElement !== null);
+		},
+		// you can find current swiper instance object like this, 
+		// while the notNextTick property value must be true
+		swiper() {
+			if (!this.$refs.mySwiper) return null;
+			return this.$refs.mySwiper.swiper;
+		},
+		currentPage () {
+			return this.pages[this.currentSlide];
+		}
 	}
 }
 </script>
@@ -206,8 +321,14 @@ export default {
 .pagecontainer {
 	height: 100%;
 	width: 100%;
-	overflow: hidden;
+	padding: $size-page-border;
 }
+
+.page-swiper {
+	height: 100%;
+	width: 100%;
+}
+
 
 .page {
 	height: 100%;
@@ -232,6 +353,55 @@ export default {
 	}
 	&_blue {
 		background-color: $blue-5;
+	}
+}
+
+.bottombar {
+	position: fixed;
+	bottom: 0;
+	right: 0;
+	z-index: 10;
+
+	padding: 0 2rem;
+	width: 100%;
+
+	display: flex;
+	justify-content: space-between;
+
+	background-color: $color-ui-background;
+
+	&_buttonblock {
+		display: flex;
+		flex-direction: row;
+	}
+}
+
+.pageoverview {
+	position: fixed;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	z-index: 12;
+
+	background-color: #333;
+
+	padding: 4rem;
+
+	display: grid;
+	grid-template-columns: 25% 25% 25% 25%;
+	grid-gap: 1rem;
+
+	&__page {
+		background-color: #666;
+	}
+
+	&__button {
+		&_close {
+			position: absolute;
+			top: 0;
+			right: 0;
+		}
 	}
 }
 </style>
