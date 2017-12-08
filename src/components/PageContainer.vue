@@ -1,22 +1,23 @@
 <template>
-	<div class="pagecontainer">
+	<div class="pagecontainer" :style="styleList">
 		<!--<div style="position: fixed; z-index: 4000; top: 0; left: 0;">
 			
 		</div>-->
-		<swiper
-			class="page-swiper"
-			:options="options" 
-			:not-next-tick="notNextTick" 
-			ref="mySwiper">
+		<div
+			class="page-swiper">
 
-			<page 
-				v-for="page in pages"
-				:key="page.id"
-				:class="{'swiper-no-swiping': swiperLocked}"
-				:page="page"
-				:current-element="currentElement"
-				@select-element="selectElement"
-			></page>
+			<div class="swiper-wrapper">
+				<page 
+					v-for="(page, index) in pages"
+					:key="page.id"
+					:index="index"
+					:class="{'swiper-no-swiping': swiperLocked}"
+					:page="page"
+					:current-element="currentElement"
+					:current-index="currentSlide"
+					@select-element="selectElement"
+				></page>
+			</div>
 
 			<!--<swiper-slide
 				v-for="page in pages"
@@ -41,7 +42,7 @@
 				<div class="swiper-button-next" slot="button-next"></div>
 			-->
 			<div class="swiper-scrollbar"   slot="scrollbar"></div>
-		</swiper>
+		</div>
 
 		<editor 
 			:current-element="currentElement"
@@ -56,7 +57,7 @@
 		</page-editor>
 		<div class="bottombar" v-show="!editorVisible">
 			<div class="bottombar_buttonblock">
-				<button class="button button_wide" @click="loadData">Laden</button>
+				<button class="button button_wide" @click="loadState">Laden</button>
 				<button class="button button_wide" @click="saveData">Speichern</button>
 				<button class="button button_wide" @click="saveFile">Export</button>
 				<div class="form_hidden">
@@ -105,17 +106,20 @@
 </template>
 
 <script>
-import {bus} from '../services/eventBus';
+import Swiper from 'swiper';
+import bus from '../services/eventBus';
 
 import {pages} from '../data/pages';
 
 import _ from 'lodash';
 
-let pageC = null;
+let pageContainer = null;
 
 export default {
-  	data() {
-	  	return {
+	data() {
+		return {
+			swiperElement: null,
+			swiper: null,
 			notNextTick: true,
 			options: {
 				// swiper options
@@ -126,26 +130,43 @@ export default {
 				autoHeight: false,
 				pagination: '.swiper-pagination',
 				paginationClickable: true,
+
 				//prevButton: '.swiper-button-prev',
 				//nextButton: '.swiper-button-next',
 				scrollbar: '.swiper-scrollbar',
 				mousewheelControl: true,
 				observeParents: true,
+
+				speed: 1000,
+
 				// if you need use plugins in the swiper, you can config in here like this
 				debugger: true,
+
 				// swiper callbacks
-				onTransitionStart (swiper) {
-					console.log(swiper)
+				// "this" in the functions refers to the swiper.
+				on: {
+					transitionStart () {
+						console.log('Transition started.');
+					},
+					setTranslate (translate) {
+						bus.$emit('translatePresentation', translate);
+					},
+					setTransition (duration) {
+						bus.$emit('setDuration', duration);
+						console.log ('duration', duration);
+					},
+					slideChangeTransitionStart () {
+						pageContainer.currentSlide = null;
+					},
+					slideChangeTransitionEnd() {
+						pageContainer.currentSlide = this.realIndex;
+					}
 				},
-				//onSetTranslate(swiper, translate) {
-				//	console.log ('translate', translate);
-				//},
+
 				//onSlideChangeTransitionEnd(swiper, event) {
 				//	console.log ('transition ended', event);
 				//},
-				onSlideChangeEnd(swiper) {
-					pageC.currentSlide = swiper.realIndex;
-				}
+				
 				// more Swiper configs and callbacks...
 				// ...
 			},
@@ -162,14 +183,22 @@ export default {
 	},
 
 	created () {
-		pageC = this;
+		pageContainer = this;
 	},
 
 	mounted () {
 		// you can use current swiper instance object to do something(swiper methods)
     	//console.log('this is current swiper instance object', this.swiper);
-    	//this.swiper.slideTo(3, 1000, false);
-		console.log ('swiper', this.swiper);
+		//this.swiper.slideTo(3, 1000, false);
+
+		this.swiperElement = this.$el.querySelector('.page-swiper');
+		let slides = this.$el.querySelectorAll('.swiper-slide');
+		
+		this.swiper = new Swiper(this.swiperElement, this.options);
+		
+		console.log ('Created Swiper', this.swiper, this.swiperElement, this.swiper.slides);
+		console.log (slides);
+
 		this.swiper.on('onTransitionEnd', function (swiper) {
 			bus.$emit('slideEntered', swiper.activeIndex);
 		});
@@ -302,14 +331,15 @@ export default {
 		editorVisible () {
 			return (this.currentElement !== null);
 		},
-		// you can find current swiper instance object like this, 
-		// while the notNextTick property value must be true
-		swiper() {
-			if (!this.$refs.mySwiper) return null;
-			return this.$refs.mySwiper.swiper;
-		},
 		currentPage () {
 			return this.pages[this.currentSlide];
+		},
+		styleList () {
+			let styles = {};
+			/*if (this.swiper.animating === true) {
+				styles.opacity = 0.5;
+			}*/
+			return styles;
 		}
 	}
 }

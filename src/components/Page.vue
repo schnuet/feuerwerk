@@ -1,36 +1,44 @@
 <template>
-	<swiper-slide 
-		class="page"
+	<div 
+		class="page swiper-slide"
 		:class="classList"
 	>
 		<page-element 
 			v-for="element in page.elements" 
-			:element="element" 
-			:type="element.type" 
+			:element="element"
 			:key="element.id"
 			:current-element="currentElement"
+			:page-is-active="pageIsActive"
+			:translate-progress="translateProgress"
 			@selected="selectElement">
 		</page-element>
-  </swiper-slide>
+  </div>
 </template>
 
 <script>
 import pageColors from '../data/pageColors';
 import pageLayouts from '../data/pageLayouts';
 
+import bus from '../services/eventBus';
+
+
 export default {
 	data() {
 		return {
-			
+			animation: null,
+			translateProgress: 0
 	  	};
 	},
 
-	props: ['page', 'currentElement'],
+	props: ['page', 'currentElement', 'index', 'currentIndex'],
 	  
 	methods: {
 		selectElement(element) {
 			this.$emit('select-element', element);
 		},
+		setTranslate(translate) {
+			this.translateProgress = (this.pageWidth + (-translate - this.pagePos )) / this.pageWidth;
+		}
 	},
 
 	computed: {
@@ -49,7 +57,22 @@ export default {
 		},
 		layout() {
 			return pageLayouts[this.page.layout];
+		},
+		pageWidth() {
+			return this.$el.offsetWidth;
+		},
+		pagePos () {
+			return this.pageWidth * this.index;
+		},
+		pageIsActive() {
+			return this.currentIndex === this.index;
 		}
+	},
+
+	mounted() {
+		bus.$on('translatePresentation', translate => {
+			this.setTranslate(translate);
+		});
 	}
 }
 </script>

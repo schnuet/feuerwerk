@@ -15,7 +15,11 @@ export const elements = [
 		top: 0,
 		width: 30,
 		height: 30,
-		fit: 'contain'
+		fit: 'contain',
+		animations: {
+			slideIn: 'fall-in',
+			slideOut: 'fade-out'
+		}
 	},
 	{
 		id: 1,

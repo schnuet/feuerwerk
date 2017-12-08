@@ -27,7 +27,7 @@
 			</template>
 		</template>
 		<img
-			v-if="type === 'image'" 
+			v-if="element.type === 'image'" 
 			draggable="false"
 			:src="getImgUrl(element.url)" 
 			:alt="element.content"
@@ -37,11 +37,19 @@
 </template>
 
 <script>
-import {bus} from '../services/eventBus';
+import bus from '../services/eventBus';
 import {markdown} from 'markdown';
 
+import animations from '../data/animations';
+
 export default {
-	props: ['type', 'element', 'currentElement'],
+	props: [
+		'type', 
+		'element', 
+		'currentElement', 
+		'pageIsActive', 
+		'translateProgress'
+	],
 
 	data () {
 		return {
@@ -59,7 +67,9 @@ export default {
 			boundOnDrag: null,
 
 			parent: null,
-			split: false
+			split: false,
+
+			animDuration: 0
 		};
 	},
 
@@ -69,9 +79,17 @@ export default {
 				this.onSlideEntered();
 			}
 		});
+		bus.$on('translatePresentation', translate => {
+			this.setTranslate(translate);
+		});
+		bus.$on('setDuration', duration => {
+			this.setDuration (duration);
+		});
 
 		this.boundOnDragEnd = this.onDragEnd.bind(this);
 		this.boundOnDrag = this.onDrag.bind(this);
+
+		//this.swiper.on('setTranslate', this.onTranslate.bind(this));
 	},
 
 	methods: {
@@ -212,21 +230,123 @@ export default {
 		},
 		onSlideEntered () {
 			console.log ('slide entered!');
+		},
+		setTranslate (translate) {
+			
+		},
+		setDuration (duration) {
+			this.animDuration = duration;
+		},
+
+		/** 
+		 * Apply the animation defined for sliding in and out
+		 * defined in animations.js, interpolated according to 
+		 * the current slide progress
+		 * 
+		 * animation property:
+		 * {
+		 * 	prop: 'transform',
+		 * 	from: 0,
+		 * 	to: 100,
+		 * 	content: `translate3d(0, ${value}%, 0)`
+		 * };
+		*/
+		getTransitionStyles (styles) {
+
+			if (!this.element.animations) return;
+
+			var progress;
+
+			// only do fade in animation:
+			if (this.translateProgress <= 1) {
+				progress = this.translateProgress;
+			}
+			else {
+				progress = 1 - (2 - this.translateProgress);
+			}
+			//else progress = 1;
+
+			let animationPart;
+
+			if (this.translateProgress > 1) {
+				animationPart = 'slideOut';
+			}
+			if (this.translateProgress <= 1) {
+				animationPart = 'slideIn';
+			}
+
+
+			// apply the animation defined in animations.js
+			let animName = this.element.animations[animationPart];
+
+			// don't do an animation if no animation for 
+			// that direction was defined.
+			if (!animName) return;
+
+			// only do the animation if it exists
+			if (!animations[animName]) {
+				console.error('Animation "'+ animName +'" is not defined.');
+				return;
+			}
+
+			console.log ('ANIMATING: ', progress, animationPart, animName);
+
+			let transitions = [];
+			let animatedProperties = {};
+
+			// loop through all the different properties that should be
+			// animated (eg. transform, opacity)
+			for (let anim of animations[animName]) {
+			
+				let value = (anim.to - anim.from) * progress + anim.from;
+				let content = anim.content.replace(/\${value}/g, value);
+				
+				transitions.push (`${anim.prop} ${this.animDuration}ms`);
+
+				if (!animatedProperties[anim.prop]) {
+					animatedProperties[anim.prop] = [content];
+				}
+				else {
+					animatedProperties[anim.prop].push(content);
+				}
+				
+			}
+
+			if (!styles.transition){
+				styles.transition = '';
+			}
+			styles.transition += transitions.join(', ');
+
+			for (let prop in animatedProperties) {
+				styles[prop] = animatedProperties[prop].join(' ');
+			}
+			console.log (styles);
+			//styles[anim.prop] = content;
+			
+			
+			//console.log ('progress', progress);
+			//styles.transform = `translate3d(0, -${progress}%, 0)`;
 		}
 	},
 
  	computed: {
 	  	isTextElement() {
-			return (this.type==='heading_main' || this.type === 'heading_sub' || this.type==='paragraph');
+			return (this.element.type==='heading_main' || this.element.type === 'heading_sub' || this.element.type==='paragraph');
 	  	},
 	  	isSelected () {
 		  	if (!this.currentElement) return false;
 		  	return (this.element.id === this.currentElement.id);
 	  	},
 	  	styleList() {
-			let styles = {
-				transform: `translate3d(${this.dragPos.deltaX}px, ${this.dragPos.deltaY}px, 0)`
-			};
+			let styles = {};
+
+			if (this.pageIsActive && this.translateProgress === 1) {
+				//styles.backgroundColor = 'pink';
+				styles.transform = `translate3d(${this.dragPos.deltaX}px, ${this.dragPos.deltaY}px, 0)`;
+			}
+			else {
+				this.getTransitionStyles(styles);
+			}
 			if (this.element.inGrid) {
 				styles['grid-column-start'] = this.element.gridColumnStart,
 				styles['grid-column-end'] = this.element.gridColumnStart + this.element.gridWidth,
@@ -242,7 +362,7 @@ export default {
 			return styles;
 		},
 		realText () {
-			if (this.type === 'paragraph') {
+			if (this.element.type === 'paragraph') {
 				return this.formattedText;
 			}
 			else return this.element.content;
